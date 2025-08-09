@@ -1,1 +1,3415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.4;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .phone-container {
+            width: 100%;
+            max-width: 500px;
+            height: 100vh;
+            margin: 0 auto;
+            background: white;
+            border-radius: 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border: none;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        /* Responsive Media Queries */
+        @media (max-width: 500px) {
+            .phone-container {
+                max-width: 100%;
+                box-shadow: none;
+            }
+        }
+        
+        @media (min-width: 501px) {
+            body {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .phone-container {
+                height: 95vh;
+                border-radius: 20px;
+            }
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: white;
+            border-bottom: 1px solid #f0f0f0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            z-index: 100;
+            box-sizing: border-box;
+        }
+        
+        @media (max-width: 500px) {
+            .header {
+                max-width: 100%;
+            }
+        }
+
+        .time {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .status-icons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .status-icon {
+            width: 20px;
+            height: 12px;
+            background: #333;
+            border-radius: 2px;
+        }
+
+        .screen-title {
+            font-size: 18px;
+            font-weight: 800;
+            text-align: center;
+            flex: 1;
+        }
+
+        .back-arrow, .settings-icon {
+            width: 24px;
+            height: 24px;
+            background: #333;
+            border-radius: 50%;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-top: 70px; /* Space for fixed header */
+            padding-bottom: 120px; /* Space for fixed bottom nav */
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* Internet Explorer 10+ */
+        }
+
+        .main-content::-webkit-scrollbar {
+            display: none; /* WebKit */
+        }
+
+        /* Daily Progress Tracker */
+        .daily-tracker {
+            padding: 20px;
+            background: white;
+        }
+        
+        @media (max-width: 400px) {
+            .daily-tracker {
+                padding: 15px;
+            }
+        }
+
+        .days-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 400px) {
+            .days-row {
+                margin-bottom: 20px;
+            }
+        }
+        
+        @media (max-width: 320px) {
+            .days-row {
+                margin-bottom: 15px;
+            }
+        }
+
+        .day-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        @media (max-width: 320px) {
+            .day-item {
+                gap: 3px;
+            }
+        }
+
+        .day-name {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        @media (max-width: 320px) {
+            .day-name {
+                font-size: 10px;
+            }
+        }
+
+        .day-number {
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+        
+        @media (max-width: 400px) {
+            .day-number {
+                padding: 6px 10px;
+            }
+        }
+        
+        @media (max-width: 320px) {
+            .day-number {
+                font-size: 12px;
+                padding: 5px 8px;
+            }
+        }
+
+        .day-item.active .day-number {
+            background: #007AFF;
+            color: white;
+        }
+
+        .day-dot {
+            width: 4px;
+            height: 4px;
+            background: #FF9500;
+            border-radius: 50%;
+        }
+
+        /* Water Progress Indicator */
+        .progress-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .progress-circle {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 20px;
+        }
+        
+        @media (max-width: 400px) {
+            .progress-circle {
+                width: 180px;
+                height: 180px;
+            }
+        }
+        
+        @media (max-width: 320px) {
+            .progress-circle {
+                width: 150px;
+                height: 150px;
+            }
+        }
+
+        .progress-circle svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .progress-bg {
+            fill: none;
+            stroke: #E5F2FF;
+            stroke-width: 8;
+        }
+
+        .progress-fill {
+            fill: none;
+            stroke: #007AFF;
+            stroke-width: 8;
+            stroke-linecap: round;
+            stroke-dasharray: 565.48;
+            stroke-dashoffset: 452.38; /* 20% progress (500ml/2500ml) */
+            transition: stroke-dashoffset 0.5s ease;
+        }
+
+        .water-fill {
+            fill: url(#waterGradient);
+            opacity: 0.8;
+            animation: waterFill 5s ease-in-out infinite;
+        }
+
+        .water-wave {
+            fill: url(#waterGradient);
+            opacity: 0.6;
+            animation: waterRise 4s ease-in-out infinite;
+        }
+
+        @keyframes waterRise {
+            0% {
+                transform: translateY(0px) scaleY(1);
+            }
+            25% {
+                transform: translateY(-2px) scaleY(1.02);
+            }
+            50% {
+                transform: translateY(-4px) scaleY(1.05);
+            }
+            75% {
+                transform: translateY(-2px) scaleY(1.02);
+            }
+            100% {
+                transform: translateY(0px) scaleY(1);
+            }
+        }
+
+        @keyframes waterFill {
+            0% {
+                transform: translateY(0px) scaleY(1);
+            }
+            50% {
+                transform: translateY(-3px) scaleY(1.03);
+            }
+            100% {
+                transform: translateY(0px) scaleY(1);
+            }
+        }
+
+        .water-bubbles {
+            fill: rgba(255, 255, 255, 0.3);
+            animation: bubbleGravity 5s ease-in-out infinite;
+        }
+
+        .water-bubbles:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+
+        .water-bubbles:nth-child(3) {
+            animation-delay: 1s;
+        }
+
+        .water-bubbles:nth-child(4) {
+            animation-delay: 1.5s;
+        }
+
+        .water-bubbles:nth-child(5) {
+            animation-delay: 2s;
+        }
+
+        @keyframes bubbleGravity {
+            0% {
+                transform: translateY(0px) scale(1);
+                opacity: 0.3;
+            }
+            20% {
+                transform: translateY(-8px) scale(1.1);
+                opacity: 0.5;
+            }
+            40% {
+                transform: translateY(-15px) scale(1.2);
+                opacity: 0.7;
+            }
+            60% {
+                transform: translateY(-22px) scale(1.1);
+                opacity: 0.5;
+            }
+            80% {
+                transform: translateY(-28px) scale(0.9);
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateY(-35px) scale(0.7);
+                opacity: 0;
+            }
+        }
+
+        /* Add rising effect to the entire water container */
+        .progress-circle {
+            animation: containerRise 7s ease-in-out infinite;
+        }
+
+        @keyframes containerRise {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-1px);
+            }
+        }
+
+        .progress-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .current-amount {
+            font-size: 32px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .daily-goal {
+            font-size: 14px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .edit-icon {
+            width: 12px;
+            height: 12px;
+            background: #666;
+            border-radius: 50%;
+        }
+
+        /* History Section */
+        .history-section {
+            padding: 0 20px 20px;
+            min-height: 280px; /* Same as progress section: 200px (progress circle) + 20px (margin) + 30px (bottom margin) + 30px (extra spacing) */
+            display: flex;
+            flex-direction: column;
+        }
+        
+        @media (max-width: 400px) {
+            .history-section {
+                padding: 0 15px 15px;
+                min-height: 260px;
+            }
+        }
+        
+        @media (max-width: 320px) {
+            .history-section {
+                padding: 0 10px 10px;
+                min-height: 230px;
+            }
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+        
+        @media (max-width: 400px) {
+            .history-header {
+                margin-bottom: 12px;
+            }
+        }
+        
+        @media (max-width: 320px) {
+            .history-header {
+                margin-bottom: 10px;
+            }
+        }
+
+        .history-items {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .history-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        @media (max-width: 400px) {
+            .history-title {
+                font-size: 16px;
+            }
+        }
+        
+        @media (max-width: 320px) {
+            .history-title {
+                font-size: 15px;
+            }
+        }
+
+        .view-all {
+            font-size: 14px;
+            color: #007AFF;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(0, 122, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 15px;
+            border: 1px solid rgba(0, 122, 255, 0.3);
+        }
+        
+        @media (max-width: 400px) {
+            .view-all {
+                font-size: 13px;
+                padding: 6px 10px;
+            }
+        }
+        
+        @media (max-width: 320px) {
+            .view-all {
+                font-size: 12px;
+                padding: 5px 8px;
+            }
+        }
+
+        .view-all:hover {
+            color: #0056CC;
+            transform: scale(1.05);
+            background: rgba(0, 122, 255, 0.2);
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        @media (max-width: 400px) {
+            .history-item {
+                padding: 12px 0;
+            }
+        }
+        
+        @media (max-width: 320px) {
+            .history-item {
+                padding: 10px 0;
+            }
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        @media (max-width: 400px) {
+            .history-left {
+                gap: 10px;
+            }
+        }
+        
+        @media (max-width: 320px) {
+            .history-left {
+                gap: 8px;
+            }
+        }
+
+        .drink-icon {
+            width: 24px;
+            height: 24px;
+            background: #007AFF;
+            border-radius: 50%;
+        }
+        
+        @media (max-width: 320px) {
+            .drink-icon {
+                width: 20px;
+                height: 20px;
+            }
+        }
+
+        .history-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .drink-name {
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        @media (max-width: 400px) {
+            .drink-name {
+                font-size: 15px;
+            }
+        }
+        
+        @media (max-width: 320px) {
+            .drink-name {
+                font-size: 14px;
+            }
+        }
+
+        .drink-time {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        @media (max-width: 320px) {
+            .drink-time {
+                font-size: 11px;
+            }
+        }
+
+        .history-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        @media (max-width: 320px) {
+            .history-right {
+                gap: 8px;
+            }
+        }
+
+        .drink-amount {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        @media (max-width: 320px) {
+            .drink-amount {
+                font-size: 13px;
+            }
+        }
+
+        .more-icon {
+            width: 16px;
+            height: 16px;
+            background: #ccc;
+            border-radius: 50%;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #f0f0f0;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            z-index: 100;
+            box-sizing: border-box;
+        }
+        
+        @media (max-width: 500px) {
+            .bottom-nav {
+                max-width: 100%;
+            }
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .glass-icon {
+            width: 32px;
+            height: 32px;
+            border: 2px solid #007AFF;
+            border-radius: 50%;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .glass-icon:hover {
+            background: #E5F2FF;
+            transform: scale(1.05);
+        }
+
+        .glass-icon::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 16px;
+            height: 16px;
+            background: #007AFF;
+            border-radius: 50% 50% 0 0;
+        }
+
+        .set-goal-btn {
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.6) 0%, rgba(0, 86, 204, 0.7) 50%, rgba(0, 64, 153, 0.8) 100%);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            padding: 10px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 6px 20px rgba(0, 122, 255, 0.4),
+                inset 0 2px 4px rgba(255, 255, 255, 0.3),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+        }
+
+        .set-goal-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.7) 0%, rgba(0, 86, 204, 0.8) 50%, rgba(0, 64, 153, 0.9) 100%);
+            transform: translateY(-1px);
+            box-shadow: 
+                0 8px 25px rgba(0, 122, 255, 0.5),
+                inset 0 2px 6px rgba(255, 255, 255, 0.4),
+                inset 0 -2px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .supplements-button {
+            background: linear-gradient(135deg, rgba(255, 229, 204, 0.6) 0%, rgba(255, 214, 179, 0.7) 50%, rgba(255, 199, 154, 0.8) 100%);
+            color: #CC6600;
+            border: 1px solid rgba(255, 153, 51, 0.6);
+            padding: 12px 24px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 6px 20px rgba(255, 153, 51, 0.3),
+                inset 0 2px 4px rgba(255, 255, 255, 0.4),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .supplements-button:hover {
+            background: linear-gradient(135deg, rgba(255, 229, 204, 0.7) 0%, rgba(255, 214, 179, 0.8) 50%, rgba(255, 199, 154, 0.9) 100%);
+            transform: translateY(-1px);
+            box-shadow: 
+                0 8px 25px rgba(255, 153, 51, 0.4),
+                inset 0 2px 6px rgba(255, 255, 255, 0.5),
+                inset 0 -2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .supplements-icon {
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #FF9933 0%, #CC6600 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* Goal Setter Modal */
+        .goal-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .goal-modal.active {
+            display: flex;
+        }
+
+        .goal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 350px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .goal-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .goal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .goal-subtitle {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .goal-input-section {
+            margin-bottom: 25px;
+        }
+
+        .goal-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #E5F2FF;
+            border-radius: 12px;
+            font-size: 16px;
+            text-align: center;
+            background: #F8FBFF;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        .goal-input:focus {
+            outline: none;
+            border-color: #007AFF;
+            background: white;
+        }
+
+        .goal-input-label {
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .goal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .goal-btn {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .goal-cancel {
+            background: linear-gradient(135deg, rgba(240, 240, 240, 0.6) 0%, rgba(224, 224, 224, 0.7) 50%, rgba(208, 208, 208, 0.8) 100%);
+            color: #666;
+            box-shadow: 
+                0 6px 20px rgba(0, 0, 0, 0.2),
+                inset 0 2px 4px rgba(255, 255, 255, 0.4),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .goal-cancel:hover {
+            background: linear-gradient(135deg, rgba(240, 240, 240, 0.7) 0%, rgba(224, 224, 224, 0.8) 50%, rgba(208, 208, 208, 0.9) 100%);
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.25),
+                inset 0 2px 6px rgba(255, 255, 255, 0.5),
+                inset 0 -2px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .goal-save {
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.6) 0%, rgba(0, 86, 204, 0.7) 50%, rgba(0, 64, 153, 0.8) 100%);
+            color: white;
+            box-shadow: 
+                0 6px 20px rgba(0, 122, 255, 0.4),
+                inset 0 2px 4px rgba(255, 255, 255, 0.3),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .goal-save:hover {
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.7) 0%, rgba(0, 86, 204, 0.8) 50%, rgba(0, 64, 153, 0.9) 100%);
+            box-shadow: 
+                0 8px 25px rgba(0, 122, 255, 0.5),
+                inset 0 2px 6px rgba(255, 255, 255, 0.4),
+                inset 0 -2px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .water-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        @media (max-width: 400px) {
+            .water-buttons {
+                gap: 10px;
+            }
+        }
+
+        .water-btn {
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.6) 0%, rgba(0, 86, 204, 0.7) 50%, rgba(0, 64, 153, 0.8) 100%);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4),
+                 inset 0 2px 4px rgba(255, 255, 255, 0.3),
+                 inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        @media (max-width: 400px) {
+            .water-btn {
+                padding: 10px 15px;
+                font-size: 13px;
+            }
+        }
+        
+        @media (max-width: 320px) {
+            .water-btn {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+        }
+        }
+
+        .water-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.7) 0%, rgba(0, 86, 204, 0.8) 50%, rgba(0, 64, 153, 0.9) 100%);
+            transform: translateY(-2px);
+            box-shadow: 
+                0 8px 25px rgba(0, 122, 255, 0.5),
+                inset 0 2px 6px rgba(255, 255, 255, 0.4),
+                inset 0 -2px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .water-btn:active {
+            transform: translateY(0);
+            box-shadow: 
+                0 2px 10px rgba(0, 122, 255, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .undo-section {
+            display: flex;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .undo-btn {
+            background: linear-gradient(135deg, rgba(255, 59, 48, 0.6) 0%, rgba(215, 0, 21, 0.7) 50%, rgba(175, 0, 17, 0.8) 100%);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 6px 20px rgba(255, 59, 48, 0.4),
+                inset 0 2px 4px rgba(255, 255, 255, 0.3),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            opacity: 0.8;
+        }
+
+        .undo-btn:hover {
+            background: linear-gradient(135deg, rgba(255, 59, 48, 0.7) 0%, rgba(215, 0, 21, 0.8) 50%, rgba(175, 0, 17, 0.9) 100%);
+            transform: translateY(-1px);
+            box-shadow: 
+                0 8px 25px rgba(255, 59, 48, 0.5),
+                inset 0 2px 6px rgba(255, 255, 255, 0.4),
+                inset 0 -2px 6px rgba(0, 0, 0, 0.15);
+            opacity: 1;
+        }
+
+        .undo-btn:disabled {
+            background: linear-gradient(135deg, rgba(204, 204, 204, 0.4) 0%, rgba(180, 180, 180, 0.5) 50%, rgba(156, 156, 156, 0.6) 100%);
+            color: #999;
+            border-color: rgba(255, 255, 255, 0.3);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 
+                0 4px 15px rgba(204, 204, 204, 0.2),
+                inset 0 2px 4px rgba(255, 255, 255, 0.2),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.05);
+            opacity: 0.6;
+        }
+
+        /* Celebration Animation */
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            display: none;
+        }
+
+        .celebration.active {
+            display: block;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #FFD700;
+            animation: confettiFall 3s linear forwards;
+        }
+
+        .confetti:nth-child(2n) {
+            background: #FF6B6B;
+            animation-delay: 0.2s;
+        }
+
+        .confetti:nth-child(3n) {
+            background: #4ECDC4;
+            animation-delay: 0.4s;
+        }
+
+        .confetti:nth-child(4n) {
+            background: #45B7D1;
+            animation-delay: 0.6s;
+        }
+
+        .confetti:nth-child(5n) {
+            background: #96CEB4;
+            animation-delay: 0.8s;
+        }
+
+        @keyframes confettiFall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .sparkle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #FFD700;
+            border-radius: 50%;
+            animation: sparkleEffect 2s ease-out forwards;
+        }
+
+        @keyframes sparkleEffect {
+            0% {
+                transform: scale(0) rotate(0deg);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.5) rotate(180deg);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(0) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .celebration-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            animation: celebrationText 2s ease-out forwards;
+            z-index: 10000;
+        }
+
+        @keyframes celebrationText {
+            0% {
+                transform: translate(-50%, -50%) scale(0) rotate(-180deg);
+                opacity: 0;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.2) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        .progress-circle.celebration-mode {
+            animation: celebrationPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes celebrationPulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+            transform: scale(1.05);
+            }
+        }
+
+        /* Notification Toggle */
+        .notification-toggle {
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.6) 0%, rgba(0, 86, 204, 0.7) 50%, rgba(0, 64, 153, 0.8) 100%);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 6px 20px rgba(0, 122, 255, 0.4),
+                inset 0 2px 4px rgba(255, 255, 255, 0.3),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+        }
+
+        .notification-toggle:hover {
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.7) 0%, rgba(0, 86, 204, 0.8) 50%, rgba(0, 64, 153, 0.9) 100%);
+            transform: translateY(-1px);
+            box-shadow: 
+                0 8px 25px rgba(0, 122, 255, 0.5),
+                inset 0 2px 6px rgba(255, 255, 255, 0.4),
+                inset 0 -2px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .notification-toggle.active {
+            background: linear-gradient(135deg, rgba(52, 199, 89, 0.7) 0%, rgba(40, 167, 69, 0.8) 50%, rgba(28, 135, 49, 0.9) 100%);
+            border-color: rgba(255, 255, 255, 0.6);
+            box-shadow: 
+                0 6px 20px rgba(52, 199, 89, 0.5),
+                inset 0 2px 4px rgba(255, 255, 255, 0.3),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .notification-toggle.active:hover {
+            background: linear-gradient(135deg, rgba(52, 199, 89, 0.8) 0%, rgba(40, 167, 69, 0.9) 50%, rgba(28, 135, 49, 1.0) 100%);
+            box-shadow: 
+                0 8px 25px rgba(52, 199, 89, 0.6),
+                inset 0 2px 6px rgba(255, 255, 255, 0.4),
+                inset 0 -2px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .notification-icon {
+            width: 18px;
+            height: 18px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .notification-icon::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 14px;
+            height: 14px;
+            background: linear-gradient(135deg, #ffffff 0%, #e8f4fd 50%, #d1e7fa 100%);
+            border-radius: 50%;
+            border: 2px solid #007AFF;
+            box-shadow: 
+                inset 0 1px 2px rgba(255, 255, 255, 0.8),
+                inset 0 -1px 1px rgba(0, 0, 0, 0.1),
+                0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .notification-icon::after {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 8px;
+            width: 2px;
+            height: 6px;
+            background: linear-gradient(145deg, #007AFF 0%, #0056CC 100%);
+            border-radius: 1px;
+            transform-origin: bottom center;
+            box-shadow: 
+                0 0 0 1px #007AFF,
+                0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Alarm clock hour hand */
+        .notification-icon:before {
+            z-index: 1;
+        }
+
+        .notification-icon:after {
+            z-index: 2;
+        }
+
+        /* Add center dot for clock */
+        .notification-toggle .notification-icon {
+            position: relative;
+        }
+
+        .notification-toggle .notification-icon:before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 14px;
+            height: 14px;
+            background: linear-gradient(135deg, #ffffff 0%, #e8f4fd 50%, #d1e7fa 100%);
+            border-radius: 50%;
+            border: 2px solid #007AFF;
+            box-shadow: 
+                inset 0 1px 2px rgba(255, 255, 255, 0.8),
+                inset 0 -1px 1px rgba(0, 0, 0, 0.1),
+                0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Minute hand (longer) */
+        .notification-toggle .notification-icon:after {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 8px;
+            width: 1px;
+            height: 6px;
+            background: #007AFF;
+            border-radius: 1px;
+            transform: rotate(45deg);
+            transform-origin: bottom center;
+            z-index: 3;
+        }
+
+        /* Hour hand (shorter) - using pseudo element on parent */
+        .notification-toggle:before {
+            content: '';
+            position: absolute;
+            top: 17px;
+            left: 23px;
+            width: 1px;
+            height: 4px;
+            background: #0056CC;
+            border-radius: 1px;
+            transform: rotate(-30deg);
+            transform-origin: bottom center;
+            z-index: 3;
+        }
+
+        /* Center dot */
+        .notification-toggle:after {
+            content: '';
+            position: absolute;
+            top: 19px;
+            left: 22px;
+            width: 2px;
+            height: 2px;
+            background: #007AFF;
+            border-radius: 50%;
+            z-index: 4;
+        }
+
+        /* Notification Status Message */
+        .notification-status {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.9) 0%, rgba(0, 86, 204, 0.9) 100%);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0, 122, 255, 0.4);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            max-width: 90%;
+        }
+
+        .notification-status.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Supplements Modal */
+        .supplements-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .supplements-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .supplements-content {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 248, 240, 0.95) 100%);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 20px 40px rgba(255, 153, 51, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .supplements-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 153, 51, 0.2);
+        }
+
+        .supplements-modal-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #CC6600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .supplements-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #666;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .supplements-close:hover {
+            background: rgba(255, 153, 51, 0.1);
+            color: #CC6600;
+        }
+
+        .supplement-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .supplement-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .supplement-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #CC6600;
+        }
+
+        .supplement-input {
+            padding: 12px 15px;
+            border: 2px solid rgba(255, 153, 51, 0.3);
+            border-radius: 15px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        .supplement-input:focus {
+            outline: none;
+            border-color: #FF9933;
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 0 0 3px rgba(255, 153, 51, 0.1);
+        }
+
+        .supplement-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .supplement-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .supplement-cancel {
+            background: linear-gradient(135deg, rgba(240, 240, 240, 0.6) 0%, rgba(224, 224, 224, 0.7) 50%, rgba(208, 208, 208, 0.8) 100%);
+            color: #666;
+            box-shadow: 
+                0 6px 20px rgba(0, 0, 0, 0.2),
+                inset 0 2px 4px rgba(255, 255, 255, 0.4),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .supplement-cancel:hover {
+            background: linear-gradient(135deg, rgba(240, 240, 240, 0.7) 0%, rgba(224, 224, 224, 0.8) 50%, rgba(208, 208, 208, 0.9) 100%);
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.25),
+                inset 0 2px 6px rgba(255, 255, 255, 0.5),
+                inset 0 -2px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .supplement-add {
+            background: linear-gradient(135deg, rgba(255, 153, 51, 0.6) 0%, rgba(255, 102, 0, 0.7) 50%, rgba(204, 102, 0, 0.8) 100%);
+            color: white;
+            box-shadow: 
+                0 6px 20px rgba(255, 153, 51, 0.4),
+                inset 0 2px 4px rgba(255, 255, 255, 0.3),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .supplement-add:hover {
+            background: linear-gradient(135deg, rgba(255, 153, 51, 0.7) 0%, rgba(255, 102, 0, 0.8) 50%, rgba(204, 102, 0, 0.9) 100%);
+            box-shadow: 
+                0 8px 25px rgba(255, 153, 51, 0.5),
+                inset 0 2px 6px rgba(255, 255, 255, 0.4),
+                inset 0 -2px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .supplement-time-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .supplement-time-input {
+            flex: 1;
+        }
+
+        /* Supplement Name Dropdown */
+        .supplement-name-container {
+            position: relative;
+        }
+
+        .supplement-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid rgba(255, 153, 51, 0.3);
+            border-top: none;
+            border-radius: 0 0 15px 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(255, 153, 51, 0.2);
+        }
+
+        .supplement-suggestions.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .supplement-suggestion {
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid rgba(255, 153, 51, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .supplement-suggestion:last-child {
+            border-bottom: none;
+        }
+
+        .supplement-suggestion:hover {
+            background: rgba(255, 153, 51, 0.1);
+            color: #CC6600;
+        }
+
+        .supplement-suggestion-icon {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .supplement-suggestion-text {
+            flex: 1;
+        }
+
+        .supplement-suggestion-category {
+            font-size: 11px;
+            color: #999;
+            background: rgba(255, 153, 51, 0.1);
+            padding: 2px 6px;
+            border-radius: 8px;
+        }
+
+        /* History Modal */
+        .history-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .history-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .history-content {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        @media (max-width: 400px) {
+            .history-content {
+                padding: 20px;
+                width: 95%;
+            }
+        }
+
+        .history-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 122, 255, 0.2);
+        }
+
+        .history-modal-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #007AFF;
+        }
+
+        .history-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #666;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .history-close:hover {
+            background: rgba(0, 122, 255, 0.1);
+            color: #007AFF;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .history-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(240, 248, 255, 0.8) 100%);
+            border-radius: 15px;
+            border: 1px solid rgba(0, 122, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .history-entry:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 122, 255, 0.15);
+        }
+
+        .history-entry-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .history-entry-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .history-entry-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .history-entry-amount {
+            font-size: 16px;
+            font-weight: 600;
+            color: #007AFF;
+        }
+
+        .history-entry-time {
+            font-size: 13px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .history-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+            font-size: 16px;
+        }
+
+        .history-empty-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        /* Supplements Section */
+        .supplements-section {
+            padding: 0 20px 20px;
+            min-height: 280px; /* Same as history section */
+            display: flex;
+            flex-direction: column;
+        }
+        
+        @media (max-width: 400px) {
+            .supplements-section {
+                padding: 0 15px 15px;
+                min-height: 260px;
+            }
+        }
+        
+        @media (max-width: 320px) {
+            .supplements-section {
+                padding: 0 10px 10px;
+                min-height: 230px;
+            }
+        }
+
+        .supplements-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-shrink: 0;
+            gap: 10px;
+        }
+        
+        @media (max-width: 400px) {
+            .supplements-header {
+                margin-bottom: 12px;
+                gap: 8px;
+            }
+        }
+        
+        @media (max-width: 320px) {
+            .supplements-header {
+                margin-bottom: 10px;
+                gap: 6px;
+            }
+        }
+
+        .supplements-title {
+            font-size: 18px;
+            font-weight: 600;
+            flex: 1;
+        }
+        
+        @media (max-width: 400px) {
+            .supplements-title {
+                font-size: 16px;
+            }
+        }
+        
+        @media (max-width: 320px) {
+            .supplements-title {
+                font-size: 15px;
+            }
+        }
+        
+        .view-all-supplements {
+            margin-left: auto;
+        }
+
+        .view-all-supplements {
+            font-size: 14px;
+            color: #FF9933;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 153, 51, 0.1);
+        }
+        
+        @media (max-width: 400px) {
+            .view-all-supplements {
+                font-size: 13px;
+            }
+        }
+        
+        @media (max-width: 320px) {
+            .view-all-supplements {
+                font-size: 12px;
+            }
+        }
+        
+        .view-all-supplements {
+            padding: 8px 12px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 153, 51, 0.3);
+        }
+        
+        @media (max-width: 400px) {
+            .view-all-supplements {
+                padding: 6px 10px;
+            }
+        }
+        
+        @media (max-width: 320px) {
+            .view-all-supplements {
+                padding: 5px 8px;
+            }
+        }
+
+        .view-all-supplements:hover {
+            color: #CC6600;
+            transform: scale(1.05);
+            background: rgba(255, 153, 51, 0.2);
+        }
+
+        .supplements-items {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .supplement-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .supplement-item:last-child {
+            border-bottom: none;
+        }
+
+        .supplement-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .supplement-icon {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #FF9933 0%, #CC6600 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+        }
+
+        .supplement-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .supplement-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .supplement-time {
+            font-size: 12px;
+            color: #999;
+            margin-top: 2px;
+        }
+
+        .supplement-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .supplement-dosage {
+            font-size: 13px;
+            color: #FF9933;
+            font-weight: 500;
+        }
+
+        .supplement-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ccc;
+        }
+
+        .supplement-status.taken {
+            background: #34C759;
+        }
+
+        .supplement-status.missed {
+            background: #FF3B30;
+        }
+
+        /* Supplements Done Section */
+        .supplements-done-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 153, 51, 0.2);
+        }
+
+        .supplements-done-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .supplements-done-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #34C759;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .supplements-done-count {
+            font-size: 12px;
+            color: #34C759;
+            font-weight: 600;
+            background: rgba(52, 199, 89, 0.1);
+            padding: 4px 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(52, 199, 89, 0.3);
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .supplements-done-items {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .supplement-done-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, rgba(52, 199, 89, 0.05) 0%, rgba(52, 199, 89, 0.02) 100%);
+            border-radius: 12px;
+            border: 1px solid rgba(52, 199, 89, 0.2);
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+
+        .supplement-done-item:hover {
+            opacity: 1;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(52, 199, 89, 0.1);
+        }
+
+        .supplement-done-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #34C759 0%, #30D158 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .supplement-done-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .supplement-done-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        .supplement-done-details {
+            font-size: 11px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .supplement-done-time {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .supplement-done-dosage {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            color: #34C759;
+            font-weight: 500;
+        }
+
+        .supplement-done-checkmark {
+            color: #34C759;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        /* Supplements To-Do Items (now part of supplements-section) */
+        .supplements-todo-items {
+            padding: 0;
+            min-height: 280px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .supplements-todo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+
+        .supplements-todo-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .supplements-todo-count {
+            font-size: 14px;
+            color: #FF9933;
+            font-weight: 600;
+            background: rgba(255, 153, 51, 0.1);
+            padding: 6px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 153, 51, 0.3);
+        }
+
+        .supplements-todo-items {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .supplement-todo-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 248, 240, 0.9) 100%);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 153, 51, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .supplement-todo-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 153, 51, 0.15);
+            border-color: rgba(255, 153, 51, 0.4);
+        }
+
+        .supplement-todo-item.completed {
+            opacity: 0.7;
+            background: linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(52, 199, 89, 0.05) 100%);
+            border-color: rgba(52, 199, 89, 0.3);
+        }
+
+        .supplement-todo-checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #FF9933;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .supplement-todo-checkbox.checked {
+            background: #34C759;
+            border-color: #34C759;
+            color: white;
+        }
+
+        .supplement-todo-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .supplement-todo-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .supplement-todo-details {
+            font-size: 13px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .supplement-todo-time {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .supplement-todo-dosage {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #FF9933;
+            font-weight: 500;
+        }
+
+        .supplement-todo-icon {
+            font-size: 20px;
+            margin-right: 12px;
+        }
+
+        .supplements-todo-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .supplements-todo-empty-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="back-arrow"></div>
+            <div class="screen-title">Wet Kunthh</div>
+            <div class="settings-icon"></div>
+            </div>
+
+        <!-- Main Content Wrapper -->
+        <div class="main-content">
+            <!-- Daily Progress Tracker -->
+            <div class="daily-tracker">
+            <div class="days-row">
+                <div class="day-item">
+                    <div class="day-name">Mon</div>
+                    <div class="day-number">2</div>
+                </div>
+                <div class="day-item">
+                    <div class="day-name">Tue</div>
+                    <div class="day-number">3</div>
+                </div>
+                <div class="day-item active">
+                    <div class="day-name">Wed</div>
+                    <div class="day-number">4</div>
+                </div>
+                <div class="day-item">
+                    <div class="day-name">Thu</div>
+                    <div class="day-number">5</div>
+                </div>
+                <div class="day-item">
+                    <div class="day-name">Fri</div>
+                    <div class="day-number">6</div>
+                    <div class="day-dot"></div>
+                </div>
+                <div class="day-item">
+                    <div class="day-name">Sat</div>
+                    <div class="day-number">7</div>
+                    <div class="day-dot"></div>
+                </div>
+        </div>
+        
+            <!-- Water Progress Indicator -->
+            <div class="progress-section">
+                <div class="progress-circle">
+                    <svg>
+                        <defs>
+                            <linearGradient id="waterGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:#87CEEB;stop-opacity:0.8" />
+                                <stop offset="50%" style="stop-color:#4682B4;stop-opacity:0.9" />
+                                <stop offset="100%" style="stop-color:#1E90FF;stop-opacity:1" />
+                            </linearGradient>
+                            <clipPath id="circleClip">
+                                <circle cx="100" cy="100" r="75"></circle>
+                            </clipPath>
+                        </defs>
+                        
+                        <circle class="progress-bg" cx="100" cy="100" r="90"></circle>
+                        <circle class="progress-fill" cx="100" cy="100" r="90"></circle>
+                        
+                        <!-- Clipped water container -->
+                        <g clip-path="url(#circleClip)">
+                            <!-- Water fill inside the circle - 20% filled (500ml/2500ml) -->
+                            <circle class="water-fill" cx="100" cy="100" r="75"></circle>
+                            
+                            <!-- Water level mask - shows only the bottom 20% -->
+                            <defs>
+                                <mask id="waterMask">
+                                    <rect width="200" height="200" fill="white"/>
+                                    <rect x="0" y="160" width="200" height="40" fill="black"/>
+                                </mask>
+                            </defs>
+                            
+                            <!-- Actual water fill with mask -->
+                            <circle class="water-fill" cx="100" cy="100" r="75" mask="url(#waterMask)"></circle>
+                            
+                            <!-- Wavy water effect - positioned at water level -->
+                            <path class="water-wave" d="M 25 160 Q 50 170, 75 160 Q 100 150, 125 160 Q 150 170, 175 160 L 175 175 Q 150 185, 125 175 Q 100 165, 75 175 Q 50 185, 25 175 Z"></path>
+                            
+                            <!-- Floating bubbles - positioned within water level -->
+                            <circle class="water-bubbles" cx="60" cy="170" r="3"></circle>
+                            <circle class="water-bubbles" cx="140" cy="165" r="2"></circle>
+                            <circle class="water-bubbles" cx="80" cy="175" r="2.5"></circle>
+                            <circle class="water-bubbles" cx="120" cy="168" r="1.5"></circle>
+                            <circle class="water-bubbles" cx="100" cy="172" r="2"></circle>
+                        </g>
+                    </svg>
+                    <div class="progress-content">
+                        <div class="current-amount">0 ml</div>
+                        <div class="daily-goal">
+                            Daily goal: 2,500 ml
+                            <div class="edit-icon"></div>
+                    </div>
+                </div>
+            </div>
+                
+                <!-- Water Intake Buttons -->
+                <div class="water-buttons">
+                    <button class="water-btn" data-amount="250">250ml</button>
+                    <button class="water-btn" data-amount="500">500ml</button>
+                    <button class="water-btn" data-amount="750">750ml</button>
+        </div>
+        
+                <!-- Undo Button -->
+                <div class="undo-section">
+                    <button class="undo-btn" id="undoBtn" disabled>↶ Undo Last</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- History Section -->
+        <div class="history-section">
+            <div class="history-header">
+                <div class="history-title">History</div>
+                <div class="view-all" id="viewAllBtn" onclick="showHistoryModal()">View All</div>
+            </div>
+            
+            <div class="history-items" id="historyItems">
+                <!-- History items will be populated by JavaScript -->
+            </div>
+        </div>
+        
+        <!-- Supplements Section (Combined) -->
+        <div class="supplements-section">
+            <div class="supplements-header">
+                <div class="supplements-title">Today's Supplements</div>
+                <div class="supplements-todo-count" id="supplementsTodoCount">0/0</div>
+                <div class="view-all-supplements" id="viewAllSupplementsBtn">View All</div>
+            </div>
+            
+            <div class="supplements-todo-items" id="supplementsTodoItems">
+                <!-- To-do supplement items will be populated by JavaScript -->
+            </div>
+            
+            <!-- Done Supplements Section -->
+            <div class="supplements-done-section" id="supplementsDoneSection" style="display: none;">
+                <div class="supplements-done-header">
+                    <div class="supplements-done-title">✅ Done Today</div>
+                    <div class="supplements-done-count" id="supplementsDoneCount">0</div>
+                </div>
+                <div class="supplements-done-items" id="supplementsDoneItems">
+                    <!-- Done supplement items will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+        </div>
+        
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <div class="nav-left">
+                <button class="set-goal-btn">Set Goal</button>
+                <button class="notification-toggle" id="notificationToggle">
+                    <span class="notification-icon"></span>
+                </button>
+            </div>
+            <button class="supplements-button" id="supplementsBtn">
+                <div class="supplements-icon">💊</div>
+                Supplements
+            </button>
+        </div>
+    </div>
+
+
+
+    <!-- Celebration Animation Container -->
+    <div class="celebration" id="celebration">
+        </div>
+        
+    <!-- History Modal -->
+    <div class="history-modal" id="historyModal">
+        <div class="history-content">
+            <div class="history-modal-header">
+                <div class="history-modal-title">Today's Water Intake</div>
+                <button class="history-close" id="historyClose">&times;</button>
+            </div>
+            <div class="history-list" id="historyList">
+                <!-- History entries will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+        
+    <!-- Supplements Modal -->
+    <div class="supplements-modal" id="supplementsModal">
+        <div class="supplements-content">
+            <div class="supplements-modal-header">
+                <div class="supplements-modal-title">
+                    <span>💊</span>
+                    Add Supplement
+                </div>
+                <button class="supplements-close" id="supplementsClose">&times;</button>
+            </div>
+            <div class="supplement-form">
+                <div class="supplement-input-group">
+                    <label class="supplement-label">Supplement Name</label>
+                    <div class="supplement-name-container">
+                        <input type="text" class="supplement-input" id="supplementName" placeholder="e.g., Vitamin D, Fish Oil, Magnesium" autocomplete="off">
+                        <div class="supplement-suggestions" id="supplementSuggestions">
+                            <!-- Suggestions will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="supplement-input-group">
+                    <label class="supplement-label">Dosage</label>
+                    <input type="text" class="supplement-input" id="supplementDosage" placeholder="e.g., 1000mg, 2 capsules, 1 tablet">
+                </div>
+                
+                <div class="supplement-time-group">
+                    <div class="supplement-input-group supplement-time-input">
+                        <label class="supplement-label">Time</label>
+                        <input type="time" class="supplement-input" id="supplementTime">
+                    </div>
+                    <div class="supplement-input-group supplement-time-input">
+                        <label class="supplement-label">Frequency</label>
+                        <select class="supplement-input" id="supplementFrequency">
+                            <option value="daily">Daily</option>
+                            <option value="twice-daily">Twice Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="as-needed">As Needed</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="supplement-input-group">
+                    <label class="supplement-label">Notes (Optional)</label>
+                    <input type="text" class="supplement-input" id="supplementNotes" placeholder="e.g., Take with food, Before workout">
+                </div>
+                
+                <div class="supplement-buttons">
+                    <button class="supplement-btn supplement-cancel" id="supplementCancel">Cancel</button>
+                    <button class="supplement-btn supplement-add" id="supplementAdd">Add Supplement</button>
+                </div>
+            </div>
+        </div>
+    </div>
+        
+    <!-- Goal Setter Modal -->
+    <div class="goal-modal" id="goalModal">
+        <div class="goal-content">
+            <div class="goal-header">
+                <div class="goal-title">Set Daily Goal</div>
+                <div class="goal-subtitle">How much water do you want to drink today?</div>
+            </div>
+            <div class="goal-input-section">
+                <div class="goal-input-label">Daily Goal (ml)</div>
+                <input type="number" class="goal-input" id="goalInput" value="2500" min="500" max="10000" step="100">
+            </div>
+            <div class="goal-buttons">
+                <button class="goal-btn goal-cancel" id="goalCancel">Cancel</button>
+                <button class="goal-btn goal-save" id="goalSave">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Water tracking variables
+        let currentWater = 0; // Starting with 0ml
+        let dailyGoal = 2500; // Daily goal in ml
+        let waterHistory = []; // Track water intake history for undo
+        let detailedHistory = []; // Track detailed water intake with timestamps
+        let waterByDate = {}; // Track water intake history by date
+        let supplementsList = []; // Track supplements list with details
+        let goalCompleted = false; // Track if goal has been completed
+        let lastResetDate = null; // Track last reset date for daily reset
+        let selectedDate = new Date().toDateString(); // Currently selected date for viewing water intake
+        
+        // Get DOM elements
+        const currentAmountElement = document.querySelector('.current-amount');
+        const progressFill = document.querySelector('.progress-fill');
+        const waterButtons = document.querySelectorAll('.water-btn');
+        const undoBtn = document.getElementById('undoBtn');
+        const celebration = document.getElementById('celebration');
+        const progressCircle = document.querySelector('.progress-circle');
+        const dayItems = document.querySelectorAll('.day-item');
+        const notificationToggle = document.getElementById('notificationToggle');
+        const viewAllBtn = document.getElementById('viewAllBtn');
+        const historyItems = document.getElementById('historyItems');
+        const supplementsBtn = document.getElementById('supplementsBtn');
+        const viewAllSupplementsBtn = document.getElementById('viewAllSupplementsBtn');
+        const supplementsTodoItems = document.getElementById('supplementsTodoItems');
+        const supplementsTodoCount = document.getElementById('supplementsTodoCount');
+        const supplementsDoneSection = document.getElementById('supplementsDoneSection');
+        const supplementsDoneItems = document.getElementById('supplementsDoneItems');
+        const supplementsDoneCount = document.getElementById('supplementsDoneCount');
+        
+        // Calculate progress percentage
+        function updateProgress() {
+            const percentage = (currentWater / dailyGoal) * 100;
+            const circumference = 2 * Math.PI * 90; // r=90
+            const offset = circumference - (percentage / 100) * circumference;
+            
+            // Update progress ring
+            progressFill.style.strokeDashoffset = offset;
+            
+            // Update water level (20% = 40px height, so 1% = 2px)
+            const waterHeight = Math.min(200, percentage * 2); // Max 200px height
+            const maskY = 200 - waterHeight;
+            
+            // Update water mask
+            const waterMask = document.querySelector('#waterMask rect:last-child');
+            if (waterMask) {
+                waterMask.setAttribute('y', maskY);
+                waterMask.setAttribute('height', waterHeight);
+            }
+            
+            // Update wave position
+            const wavePath = document.querySelector('.water-wave');
+            if (wavePath) {
+                const waveY = Math.max(25, maskY - 15); // Wave slightly above water level
+                wavePath.setAttribute('d', `M 25 ${waveY} Q 50 ${waveY+10}, 75 ${waveY} Q 100 ${waveY-10}, 125 ${waveY} Q 150 ${waveY+10}, 175 ${waveY} L 175 175 Q 150 185, 125 175 Q 100 165, 75 175 Q 50 185, 25 175 Z`);
+            }
+            
+            // Update bubble positions
+            const bubbles = document.querySelectorAll('.water-bubbles');
+            bubbles.forEach((bubble, index) => {
+                const baseY = maskY - 10 - (index * 5);
+                const x = 60 + (index * 20);
+                bubble.setAttribute('cy', baseY);
+                bubble.setAttribute('cx', x);
+            });
+        }
+
+        // Update supplements to-do section display
+        function updateSupplementsTodoSection() {
+            if (!supplementsTodoItems) return;
+
+            supplementsTodoItems.innerHTML = '';
+            
+            if (supplementsList.length === 0) {
+                supplementsTodoItems.innerHTML = `
+                    <div class="supplements-todo-empty">
+                        <div class="supplements-todo-empty-icon">📋</div>
+                        <div style="font-size: 14px;">No supplements to track</div>
+                        <div style="font-size: 12px; margin-top: 4px; opacity: 0.7;">Add supplements to see your daily checklist</div>
+                    </div>
+                `;
+                supplementsTodoCount.textContent = '0/0';
+                return;
+            }
+
+            // Filter today's supplements
+            const todaySupplements = supplementsList.filter(supplement => {
+                // For now, show all supplements as daily tasks
+                return supplement.frequency === 'daily' || supplement.frequency === 'twice-daily';
+            });
+
+            const completedCount = todaySupplements.filter(s => s.taken).length;
+            supplementsTodoCount.textContent = `${completedCount}/${todaySupplements.length}`;
+            
+            todaySupplements.forEach((supplement) => {
+                const todoItem = document.createElement('div');
+                todoItem.className = `supplement-todo-item ${supplement.taken ? 'completed' : ''}`;
+                
+                // Find supplement emoji from common supplements list
+                const supplementData = commonSupplements.find(s => s.name === supplement.name);
+                const emoji = supplementData ? supplementData.icon : '💊';
+                
+                todoItem.innerHTML = `
+                    <div class="supplement-todo-checkbox ${supplement.taken ? 'checked' : ''}" data-id="${supplement.id}">
+                        ${supplement.taken ? '✓' : ''}
+                    </div>
+                    <div class="supplement-todo-icon">${emoji}</div>
+                    <div class="supplement-todo-info">
+                        <div class="supplement-todo-name">${supplement.name}</div>
+                        <div class="supplement-todo-details">
+                            <div class="supplement-todo-time">
+                                <span>🕐</span> ${supplement.time}
+                            </div>
+                            <div class="supplement-todo-dosage">
+                                <span>💊</span> ${supplement.dosage}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add click event to toggle completion
+                todoItem.addEventListener('click', () => {
+                    toggleSupplementCompletion(supplement.id);
+                });
+                
+                supplementsTodoItems.appendChild(todoItem);
+            });
+        }
+
+        // Toggle supplement completion
+        function toggleSupplementCompletion(supplementId) {
+            const supplement = supplementsList.find(s => s.id === supplementId);
+            if (supplement) {
+                supplement.taken = !supplement.taken;
+                updateSupplementsTodoSection();
+                updateSupplementsSection();
+                saveData(); // Save the changes
+                
+                // Show feedback
+                const action = supplement.taken ? 'marked as taken' : 'unmarked';
+                showNotificationStatus(`${supplement.name} ${action} 💊`);
+            }
+        }
+
+        // Update supplements section display
+        function updateSupplementsSection() {
+            // Since we've combined the sections, we now just need to update the to-do and done sections
+            updateSupplementsTodoSection();
+            updateSupplementsDoneSection();
+        }
+
+        // Update supplements done section display
+        function updateSupplementsDoneSection() {
+            if (!supplementsDoneItems || !supplementsDoneSection) return;
+
+            // Filter completed supplements
+            const completedSupplements = supplementsList.filter(supplement => supplement.taken);
+            
+            if (completedSupplements.length === 0) {
+                supplementsDoneSection.style.display = 'none';
+                return;
+            }
+
+            supplementsDoneSection.style.display = 'block';
+            supplementsDoneCount.textContent = completedSupplements.length;
+            supplementsDoneItems.innerHTML = '';
+            
+            // Show all completed supplements (most recent first)
+            const reversedCompleted = [...completedSupplements].reverse();
+            
+            reversedCompleted.forEach((supplement) => {
+                const doneItem = document.createElement('div');
+                doneItem.className = 'supplement-done-item';
+                
+                // Find supplement emoji from common supplements list
+                const supplementData = commonSupplements.find(s => s.name === supplement.name);
+                const emoji = supplementData ? supplementData.icon : '💊';
+                
+                doneItem.innerHTML = `
+                    <div class="supplement-done-icon">${emoji}</div>
+                    <div class="supplement-done-info">
+                        <div class="supplement-done-name">${supplement.name}</div>
+                        <div class="supplement-done-details">
+                            <div class="supplement-done-time">
+                                <span>🕐</span> ${supplement.time}
+                            </div>
+                            <div class="supplement-done-dosage">
+                                <span>💊</span> ${supplement.dosage}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="supplement-done-checkmark">✓</div>
+                `;
+                
+                // Add click event to undo completion
+                doneItem.addEventListener('click', () => {
+                    toggleSupplementCompletion(supplement.id);
+                });
+                
+                supplementsDoneItems.appendChild(doneItem);
+            });
+        }
+
+        // Update history section display
+        function updateHistorySection() {
+            if (!historyItems) return;
+
+            historyItems.innerHTML = '';
+            
+            if (detailedHistory.length === 0) {
+                historyItems.innerHTML = `
+                    <div class="history-empty-section">
+                        <div style="text-align: center; padding: 20px; color: #999;">
+                            <div style="font-size: 20px; margin-bottom: 8px;">💧</div>
+                            <div style="font-size: 14px;">No water intake recorded yet</div>
+                            <div style="font-size: 12px; margin-top: 4px; opacity: 0.7;">Add water to see your history</div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Show latest 3 entries in history section
+            const recentEntries = detailedHistory.slice(-3).reverse();
+            
+            recentEntries.forEach((entry) => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                
+                historyItem.innerHTML = `
+                    <div class="history-left">
+                        <div class="drink-icon"></div>
+                        <div class="history-info">
+                            <div class="drink-name">Water</div>
+                            <div class="drink-time">${entry.time}</div>
+                        </div>
+                    </div>
+                    <div class="history-right">
+                        <div class="drink-amount">${entry.amount} ml</div>
+                        <div class="more-icon"></div>
+                    </div>
+                `;
+                
+                historyItems.appendChild(historyItem);
+            });
+        }
+        
+        // Add water intake
+        function addWater(amount) {
+            // Store the previous amount for undo
+            waterHistory.push(amount);
+            
+            // Add to detailed history with timestamp
+            const now = new Date();
+            detailedHistory.push({
+                amount: amount,
+                timestamp: now.toISOString(),
+                time: now.toLocaleTimeString('en-US', { 
+                    hour: 'numeric', 
+                    minute: '2-digit',
+                    hour12: true 
+                })
+            });
+            
+            const previousWater = currentWater;
+            currentWater = Math.min(currentWater + amount, dailyGoal);
+            currentAmountElement.textContent = currentWater + ' ml';
+            updateProgress();
+            
+            // Check for goal completion
+            if (!goalCompleted && currentWater >= dailyGoal && previousWater < dailyGoal) {
+                triggerCelebration();
+            }
+            
+            // Enable undo button
+            undoBtn.disabled = false;
+            
+            // Save data after adding water
+            saveData();
+            
+            // Update history section
+            updateHistorySection();
+            
+            // Update day dots to show which days have water data
+            updateDayDots();
+            
+            // Add visual feedback
+            const button = event.target;
+            button.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                button.style.transform = '';
+            }, 150);
+        }
+
+        // Update day dots to show which days have water data
+        function updateDayDots() {
+            dayItems.forEach(item => {
+                const dateString = item.dataset.date;
+                const today = new Date().toDateString();
+                
+                // Skip if no date is set
+                if (!dateString) return;
+                
+                const hasDot = item.querySelector('.day-dot');
+                
+                // Add dot if there's water data for this day
+                if ((dateString === today && currentWater > 0) || 
+                    (waterByDate[dateString] && waterByDate[dateString].currentWater > 0)) {
+                    if (!hasDot) {
+                        const dot = document.createElement('div');
+                        dot.className = 'day-dot';
+                        item.appendChild(dot);
+                    }
+                } else if (hasDot) {
+                    hasDot.remove();
+                }
+            });
+        }
+        
+        // Undo last water intake
+        function undoLastWater() {
+            if (waterHistory.length > 0) {
+                const lastAmount = waterHistory.pop();
+                
+                // Also remove from detailed history
+                if (detailedHistory.length > 0) {
+                    detailedHistory.pop();
+                }
+                
+                currentWater = Math.max(0, currentWater - lastAmount);
+                currentAmountElement.textContent = currentWater + ' ml';
+                updateProgress();
+                
+                // Reset goal completion if water goes below goal
+                if (currentWater < dailyGoal && goalCompleted) {
+                    goalCompleted = false;
+                    progressCircle.classList.remove('celebration-mode');
+                }
+                
+                // Disable undo button if no more history
+                if (waterHistory.length === 0) {
+                    undoBtn.disabled = true;
+                }
+                
+                // Save data after undo
+                saveData();
+                
+                // Update history section
+                updateHistorySection();
+                
+                // Update day dots
+                updateDayDots();
+                
+                // Add visual feedback
+                undoBtn.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    undoBtn.style.transform = '';
+                }, 150);
+            }
+        }
+
+        // Trigger celebration animation
+        function triggerCelebration() {
+            goalCompleted = true;
+            
+            // Add celebration mode to progress circle
+            progressCircle.classList.add('celebration-mode');
+            
+            // Show celebration container
+            celebration.classList.add('active');
+            
+            // Create confetti
+            createConfetti();
+            
+            // Create sparkles
+            createSparkles();
+            
+            // Hide celebration after 3 seconds
+            setTimeout(() => {
+                celebration.classList.remove('active');
+                progressCircle.classList.remove('celebration-mode');
+            }, 3000);
+        }
+
+        // Create confetti particles
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.animationDelay = Math.random() * 2 + 's';
+                celebration.appendChild(confetti);
+                
+                // Remove confetti after animation
+                setTimeout(() => {
+                    if (confetti.parentNode) {
+                        confetti.parentNode.removeChild(confetti);
+                    }
+                }, 5000);
+            }
+        }
+
+        // Create sparkle effects
+        function createSparkles() {
+            for (let i = 0; i < 30; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle';
+                sparkle.style.left = Math.random() * 100 + '%';
+                sparkle.style.top = Math.random() * 100 + '%';
+                sparkle.style.animationDelay = Math.random() * 1 + 's';
+                celebration.appendChild(sparkle);
+                
+                // Remove sparkle after animation
+                setTimeout(() => {
+                    if (sparkle.parentNode) {
+                        sparkle.parentNode.removeChild(sparkle);
+                    }
+                }, 3000);
+            }
+        }
+        
+        // Add click event listeners to buttons
+        waterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const amount = parseInt(this.getAttribute('data-amount'));
+                addWater(amount);
+            });
+        });
+
+        // Add undo button event listener
+        undoBtn.addEventListener('click', undoLastWater);
+
+        // Goal Setter Modal Functionality
+        const goalModal = document.getElementById('goalModal');
+        const setGoalBtn = document.querySelector('.set-goal-btn');
+        const goalCancel = document.getElementById('goalCancel');
+        const goalSave = document.getElementById('goalSave');
+        const goalInput = document.getElementById('goalInput');
+        const dailyGoalElement = document.querySelector('.daily-goal');
+
+        // Open modal
+        setGoalBtn.addEventListener('click', function() {
+            goalModal.classList.add('active');
+            goalInput.value = dailyGoal;
+            goalInput.focus();
+        });
+
+        // Close modal
+        function closeModal() {
+            goalModal.classList.remove('active');
+        }
+
+        goalCancel.addEventListener('click', closeModal);
+        goalSave.addEventListener('click', function() {
+            const newGoal = parseInt(goalInput.value);
+            if (newGoal >= 500 && newGoal <= 10000) {
+                dailyGoal = newGoal;
+                dailyGoalElement.innerHTML = `Daily goal: ${dailyGoal.toLocaleString()} ml<div class="edit-icon"></div>`;
+                updateProgress();
+                
+                // Save the new goal permanently
+                saveData();
+                
+                closeModal();
+            } else {
+                alert('Please enter a goal between 500ml and 10,000ml');
+            }
+        });
+
+        // Close modal when clicking outside
+        goalModal.addEventListener('click', function(e) {
+            if (e.target === goalModal) {
+                closeModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && goalModal.classList.contains('active')) {
+                closeModal();
+            }
+        });
+        
+        // Function to display water intake for a specific date
+        function displayWaterForDate(dateString) {
+            selectedDate = dateString;
+            
+            // Update active day in UI
+            dayItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.date === dateString) {
+                    item.classList.add('active');
+                }
+            });
+            
+            // If the selected date is today, show current data
+            const today = new Date().toDateString();
+            if (dateString === today) {
+                currentAmountElement.textContent = currentWater + ' ml';
+                updateProgress();
+                return;
+            }
+            
+            // Otherwise, load data for the selected date from waterByDate
+            if (waterByDate[dateString]) {
+                const dateData = waterByDate[dateString];
+                currentAmountElement.textContent = dateData.currentWater + ' ml';
+                
+                // Update progress bar for the selected date
+                const percentage = Math.min((dateData.currentWater / dailyGoal) * 100, 100);
+                progressFill.style.width = percentage + '%';
+                
+                // Update progress circle
+                if (dateData.goalCompleted) {
+                    progressCircle.classList.add('celebration-mode');
+                } else {
+                    progressCircle.classList.remove('celebration-mode');
+                }
+            } else {
+                // No data for this date
+                currentAmountElement.textContent = '0 ml';
+                progressFill.style.width = '0%';
+                progressCircle.classList.remove('celebration-mode');
+            }
+        }
+        
+        // Set up day items with dates and click handlers
+        function setupDayItems() {
+            const today = new Date();
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            
+            // Find the index of the active day (default to today)
+            let activeDayIndex = -1;
+            dayItems.forEach((item, index) => {
+                if (item.classList.contains('active')) {
+                    activeDayIndex = index;
+                }
+            });
+            
+            if (activeDayIndex === -1) {
+                activeDayIndex = today.getDay();
+            }
+            
+            // Calculate the date of the first day in the row
+            const firstDay = new Date(today);
+            firstDay.setDate(today.getDate() - activeDayIndex);
+            
+            // Set dates for each day item
+            dayItems.forEach((item, index) => {
+                const date = new Date(firstDay);
+                date.setDate(firstDay.getDate() + index);
+                
+                const dateString = date.toDateString();
+                item.dataset.date = dateString;
+                
+                // Update day name and number
+                const dayNameElement = item.querySelector('.day-name');
+                const dayNumberElement = item.querySelector('.day-number');
+                
+                if (dayNameElement) {
+                    dayNameElement.textContent = dayNames[date.getDay()];
+                }
+                
+                if (dayNumberElement) {
+                    dayNumberElement.textContent = date.getDate();
+                }
+                
+                // Add dot if there's water data for this day
+                const hasDot = item.querySelector('.day-dot');
+                if (waterByDate[dateString] && waterByDate[dateString].currentWater > 0) {
+                    if (!hasDot) {
+                        const dot = document.createElement('div');
+                        dot.className = 'day-dot';
+                        item.appendChild(dot);
+                    }
+                } else if (hasDot && dateString !== today.toDateString()) {
+                    hasDot.remove();
+                }
+                
+                // Set active class for today
+                if (dateString === today.toDateString()) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+                
+                // Add click event listener
+                item.addEventListener('click', function() {
+                    displayWaterForDate(dateString);
+                });
+            });
+            
+            // Display water for today initially
+            displayWaterForDate(today.toDateString());
+        }
+        
+        // Load saved data and initialize
+        loadSavedData();
+        checkDailyReset();
+        setupDayItems();
+        updateProgress();
+        updateHistorySection();
+        updateSupplementsSection();
+        updateSupplementsTodoSection();
+
+        // Add scroll detection for supplements to-do section
+        const mainContent = document.querySelector('.main-content');
+        // Scroll detection code removed as we've combined the supplements sections
+
+        // Save data functions
+        function saveData() {
+            // Store today's data in waterByDate
+            const today = new Date().toDateString();
+            waterByDate[today] = {
+                currentWater: currentWater,
+                waterHistory: waterHistory,
+                detailedHistory: detailedHistory,
+                goalCompleted: goalCompleted
+            };
+            
+            const data = {
+                currentWater: currentWater,
+                dailyGoal: dailyGoal,
+                waterHistory: waterHistory,
+                detailedHistory: detailedHistory,
+                waterByDate: waterByDate,
+                goalCompleted: goalCompleted,
+                lastResetDate: new Date().toDateString()
+            };
+            localStorage.setItem('waterTrackerData', JSON.stringify(data));
+        }
+
+        function loadSavedData() {
+            const savedData = localStorage.getItem('waterTrackerData');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                dailyGoal = data.dailyGoal || 2500; // Keep saved goal forever
+                lastResetDate = data.lastResetDate;
+                waterByDate = data.waterByDate || {};
+                
+                // Update goal display
+                const dailyGoalElement = document.querySelector('.daily-goal');
+                dailyGoalElement.innerHTML = `Daily goal: ${dailyGoal.toLocaleString()} ml<div class="edit-icon"></div>`;
+            }
+        }
+
+        function checkDailyReset() {
+            const today = new Date().toDateString();
+            const savedData = localStorage.getItem('waterTrackerData');
+            
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                if (data.lastResetDate !== today) {
+                    // Store previous day's data in waterByDate if it exists
+                    if (data.lastResetDate) {
+                        waterByDate[data.lastResetDate] = {
+                            currentWater: data.currentWater || 0,
+                            waterHistory: data.waterHistory || [],
+                            detailedHistory: data.detailedHistory || [],
+                            goalCompleted: data.goalCompleted || false
+                        };
+                    }
+                    
+                    // New day - reset water data but keep goal
+                    currentWater = 0;
+                    waterHistory = [];
+                    detailedHistory = [];
+                    goalCompleted = false;
+                    undoBtn.disabled = true;
+                    progressCircle.classList.remove('celebration-mode');
+                    
+                    // Update display
+                    currentAmountElement.textContent = '0 ml';
+                    
+                    // Save reset data
+                    saveData();
+                } else {
+                    // Same day - load saved water data
+                    currentWater = data.currentWater || 0;
+                    waterHistory = data.waterHistory || [];
+                    detailedHistory = data.detailedHistory || [];
+                    goalCompleted = data.goalCompleted || false;
+                    
+                    // Update display
+                    currentAmountElement.textContent = currentWater + ' ml';
+                    
+                    // Update undo button state
+                    undoBtn.disabled = waterHistory.length === 0;
+                    
+                    // Restore celebration mode if goal was completed
+                    if (goalCompleted) {
+                        progressCircle.classList.add('celebration-mode');
+                    }
+                }
+            }
+        }
+
+        // History Modal Functionality
+        const historyModal = document.getElementById('historyModal');
+        const historyClose = document.getElementById('historyClose');
+        const historyList = document.getElementById('historyList');
+
+        // Show history modal
+        function showHistoryModal() {
+            console.log('showHistoryModal called!'); // Debug log
+            console.log('detailedHistory:', detailedHistory); // Debug log
+            populateHistoryList();
+            historyModal.classList.add('active');
+        }
+
+        // Close history modal
+        function closeHistoryModal() {
+            historyModal.classList.remove('active');
+        }
+
+        // Populate history list
+        function populateHistoryList() {
+            historyList.innerHTML = '';
+            
+            if (detailedHistory.length === 0) {
+                historyList.innerHTML = `
+                    <div class="history-empty">
+                        <div class="history-empty-icon">💧</div>
+                        <div>No water intake recorded today</div>
+                        <div style="font-size: 13px; margin-top: 5px; opacity: 0.7;">Start drinking water to see your history!</div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Sort history by timestamp (newest first)
+            const sortedHistory = [...detailedHistory].reverse();
+            
+            sortedHistory.forEach((entry, index) => {
+                const historyEntry = document.createElement('div');
+                historyEntry.className = 'history-entry';
+                
+                historyEntry.innerHTML = `
+                    <div class="history-entry-left">
+                        <div class="history-entry-icon">💧</div>
+                        <div class="history-entry-info">
+                            <div class="history-entry-amount">${entry.amount} ml</div>
+                            <div class="history-entry-time">${entry.time}</div>
+                        </div>
+                    </div>
+                    <div class="history-entry-right">
+                        <div style="font-size: 12px; color: #999;">#${detailedHistory.length - index}</div>
+                    </div>
+                `;
+                
+                historyList.appendChild(historyEntry);
+            });
+        }
+
+        // Event listeners for history modal
+        if (viewAllBtn) {
+            viewAllBtn.addEventListener('click', function() {
+                console.log('View All clicked!'); // Debug log
+                showHistoryModal();
+            });
+        } else {
+            console.error('viewAllBtn not found!');
+        }
+        
+        historyClose.addEventListener('click', closeHistoryModal);
+
+        // Close modal when clicking outside
+        historyModal.addEventListener('click', function(e) {
+            if (e.target === historyModal) {
+                closeHistoryModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && historyModal.classList.contains('active')) {
+                closeHistoryModal();
+            }
+        });
+
+        // Notification functionality
+        function requestNotificationPermission() {
+            if ('Notification' in window) {
+                if (Notification.permission === 'default') {
+                    Notification.requestPermission().then(function(permission) {
+                        updateNotificationButton(permission);
+                        if (permission === 'granted') {
+                            showNotificationStatus('Notifications enabled! You\'ll receive hourly reminders.');
+                        } else {
+                            showNotificationStatus('Notifications denied. Enable them in browser settings to get reminders.');
+                        }
+                    });
+                } else if (Notification.permission === 'granted') {
+                    // Show current status
+                    notificationToggle.classList.add('active');
+                    showNotificationStatus('Notifications are enabled. You\'ll receive hourly reminders.');
+                } else {
+                    showNotificationStatus('Notifications are blocked. Please enable them in your browser settings.');
+                }
+            } else {
+                showNotificationStatus('Your browser doesn\'t support notifications.');
+            }
+        }
+
+        // Update notification button appearance based on permission
+        function updateNotificationButton(permission) {
+            if (permission === 'granted') {
+                notificationToggle.classList.add('active');
+            } else {
+                notificationToggle.classList.remove('active');
+            }
+        }
+
+        // Show notification status message
+        function showNotificationStatus(message) {
+            // Create or update status message
+            let statusDiv = document.getElementById('notificationStatus');
+            if (!statusDiv) {
+                statusDiv = document.createElement('div');
+                statusDiv.id = 'notificationStatus';
+                statusDiv.className = 'notification-status';
+                document.body.appendChild(statusDiv);
+            }
+            
+            statusDiv.textContent = message;
+            statusDiv.classList.add('show');
+            
+            // Hide after 4 seconds
+            setTimeout(() => {
+                statusDiv.classList.remove('show');
+            }, 4000);
+        }
+
+        // Check notification permission on page load
+        function checkNotificationPermission() {
+            if ('Notification' in window) {
+                updateNotificationButton(Notification.permission);
+            }
+        }
+
+        // Add notification toggle event listener
+        notificationToggle.addEventListener('click', function() {
+            requestNotificationPermission();
+        });
+
+        // Initialize notification permission check
+        checkNotificationPermission();
+
+        // View All Supplements button functionality
+        viewAllSupplementsBtn.addEventListener('click', function() {
+            // Add visual feedback
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+            
+            // Show supplements list message
+            if (supplementsList.length === 0) {
+                showNotificationStatus('No supplements added yet. Add some supplements to see them here! 💊');
+            } else {
+                showNotificationStatus(`You have ${supplementsList.length} supplement${supplementsList.length > 1 ? 's' : ''} in your list 💊`);
+            }
+        });
+
+        // Common supplements list
+        const commonSupplements = [
+            { name: 'Creatine', icon: '💪', category: 'Performance', dosage: '5g' },
+            { name: 'Whey Protein', icon: '🥛', category: 'Protein', dosage: '25g' },
+            { name: 'Vitamin D', icon: '☀️', category: 'Vitamin', dosage: '1000 IU' },
+            { name: 'Fish Oil', icon: '🐟', category: 'Omega-3', dosage: '1000mg' },
+            { name: 'Magnesium', icon: '🧪', category: 'Mineral', dosage: '400mg' },
+            { name: 'Zinc', icon: '⚡', category: 'Mineral', dosage: '15mg' },
+            { name: 'Vitamin C', icon: '🍊', category: 'Vitamin', dosage: '1000mg' },
+            { name: 'B-Complex', icon: '🧬', category: 'Vitamin', dosage: '1 tablet' },
+            { name: 'Iron', icon: '🔴', category: 'Mineral', dosage: '18mg' },
+            { name: 'Calcium', icon: '🦴', category: 'Mineral', dosage: '600mg' },
+            { name: 'Multivitamin', icon: '💊', category: 'Multi', dosage: '1 tablet' },
+            { name: 'Probiotics', icon: '🦠', category: 'Digestive', dosage: '1 capsule' }
+        ];
+
+        // Supplements Modal Functionality
+        const supplementsModal = document.getElementById('supplementsModal');
+        const supplementsClose = document.getElementById('supplementsClose');
+        const supplementCancel = document.getElementById('supplementCancel');
+        const supplementAdd = document.getElementById('supplementAdd');
+        const supplementName = document.getElementById('supplementName');
+        const supplementDosage = document.getElementById('supplementDosage');
+        const supplementTime = document.getElementById('supplementTime');
+        const supplementFrequency = document.getElementById('supplementFrequency');
+        const supplementNotes = document.getElementById('supplementNotes');
+        const supplementSuggestions = document.getElementById('supplementSuggestions');
+
+        // Show supplement suggestions
+        function showSupplementSuggestions(filter = '') {
+            const filteredSupplements = commonSupplements.filter(supplement => 
+                supplement.name.toLowerCase().includes(filter.toLowerCase())
+            );
+
+            supplementSuggestions.innerHTML = '';
+            
+            filteredSupplements.forEach(supplement => {
+                const suggestionDiv = document.createElement('div');
+                suggestionDiv.className = 'supplement-suggestion';
+                suggestionDiv.innerHTML = `
+                    <div class="supplement-suggestion-icon">${supplement.icon}</div>
+                    <div class="supplement-suggestion-text">${supplement.name}</div>
+                    <div class="supplement-suggestion-category">${supplement.category}</div>
+                `;
+                
+                suggestionDiv.addEventListener('click', () => {
+                    supplementName.value = supplement.name;
+                    supplementDosage.value = supplement.dosage;
+                    hideSupplementSuggestions();
+                    supplementDosage.focus();
+                });
+                
+                supplementSuggestions.appendChild(suggestionDiv);
+            });
+
+            if (filteredSupplements.length > 0) {
+                supplementSuggestions.classList.add('show');
+            } else {
+                hideSupplementSuggestions();
+            }
+        }
+
+        // Hide supplement suggestions
+        function hideSupplementSuggestions() {
+            supplementSuggestions.classList.remove('show');
+        }
+
+        // Open supplements modal
+        function openSupplementsModal() {
+            supplementsModal.classList.add('active');
+            // Set default time to current time
+            const now = new Date();
+            const timeString = now.toTimeString().slice(0, 5);
+            supplementTime.value = timeString;
+            supplementName.focus();
+        }
+
+        // Close supplements modal
+        function closeSupplementsModal() {
+            supplementsModal.classList.remove('active');
+            hideSupplementSuggestions();
+            // Clear form
+            supplementName.value = '';
+            supplementDosage.value = '';
+            supplementTime.value = '';
+            supplementFrequency.value = 'daily';
+            supplementNotes.value = '';
+        }
+
+        // Add supplement
+        function addSupplement() {
+            const name = supplementName.value.trim();
+            const dosage = supplementDosage.value.trim();
+            const time = supplementTime.value;
+            const frequency = supplementFrequency.value;
+            const notes = supplementNotes.value.trim();
+
+            if (!name || !dosage) {
+                alert('Please enter supplement name and dosage');
+                return;
+            }
+
+            // Create supplement object
+            const supplement = {
+                id: Date.now().toString(),
+                name: name,
+                dosage: dosage,
+                time: time,
+                frequency: frequency,
+                notes: notes,
+                timestamp: new Date().toISOString(),
+                taken: false
+            };
+
+            // Add to supplements list
+            supplementsList.push(supplement);
+            
+            // Update supplements section display
+            updateSupplementsSection();
+            updateSupplementsTodoSection();
+            
+            // Show success message
+            showNotificationStatus(`Added ${name} (${dosage}) - ${frequency} at ${time} 💊`);
+            
+            closeSupplementsModal();
+        }
+
+        // Supplement name input event listeners
+        supplementName.addEventListener('focus', () => {
+            showSupplementSuggestions(supplementName.value);
+        });
+
+        supplementName.addEventListener('input', (e) => {
+            showSupplementSuggestions(e.target.value);
+        });
+
+        supplementName.addEventListener('blur', () => {
+            // Delay hiding to allow click on suggestions
+            setTimeout(() => {
+                hideSupplementSuggestions();
+            }, 200);
+        });
+
+        // Supplements modal event listeners
+        supplementsClose.addEventListener('click', closeSupplementsModal);
+        supplementCancel.addEventListener('click', closeSupplementsModal);
+        supplementAdd.addEventListener('click', addSupplement);
+
+        // Close modal when clicking outside
+        supplementsModal.addEventListener('click', function(e) {
+            if (e.target === supplementsModal) {
+                closeSupplementsModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && supplementsModal.classList.contains('active')) {
+                closeSupplementsModal();
+            }
+        });
+
+        // Supplements button functionality
+        supplementsBtn.addEventListener('click', function() {
+            // Add visual feedback
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+            
+            // Open supplements modal
+            openSupplementsModal();
+        });
+        
+        // Test the View All button after everything is loaded
+        setTimeout(() => {
+            const testBtn = document.getElementById('viewAllBtn');
+            console.log('viewAllBtn test:', testBtn);
+            if (testBtn) {
+                console.log('Button found after timeout');
+            } else {
+                console.log('Button still not found after timeout');
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
